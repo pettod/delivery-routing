@@ -37,21 +37,23 @@ def plotSolution(depot_coordinates, packages, route):
     plt.show()
 
 
-def printSolution(manager, routing, solution):
-    print(f'Objective: {solution.ObjectiveValue()}')
+def printSolution(manager, routing, solution, packages):
+    print(f"Objective: {solution.ObjectiveValue()}")
     vehicle_id = 0
     total_distance = 0
     index = routing.Start(vehicle_id)
-    plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
+    plan_output = "Route for vehicle {}:\n".format(vehicle_id)
+    deadlines = "Deadlines of the packages\nDeadline | Route\n"
     route_distance = 0
     while not routing.IsEnd(index):
-        plan_output += ' {} -> '.format(manager.IndexToNode(index))
+        plan_output += " {} -> ".format(manager.IndexToNode(index))
         previous_index = index
         index = solution.Value(routing.NextVar(index))
         route_distance += routing.GetArcCostForVehicle(
             previous_index, index, vehicle_id)
-    plan_output += '{}\n'.format(manager.IndexToNode(index))
-    plan_output += 'Distance of the route: {}m\n'.format(route_distance)
+        package_deadline = packages[index-1]["deadline"] if index != len(packages) + 1 else -1
+        deadlines += "{:8} | {:4}\n".format(package_deadline, route_distance)
+    plan_output += "{}\n".format(manager.IndexToNode(index))
+    plan_output += "Distance of the route: {}m\n".format(route_distance)
     print(plan_output)
-    total_distance += route_distance
-    print('Total Distance of all routes: {}m'.format(total_distance))
+    print(deadlines)
