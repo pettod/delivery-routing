@@ -38,21 +38,39 @@ def plotSolution(depot_coordinates, packages, route):
 
 
 def printSolution(manager, routing, solution, packages):
+    def addDeadline(
+            index, package_deadline, route_distance, single_delivery_distance):
+        return "{:5} | {:8} | {:5} | {:5}\n".format(
+            index, package_deadline, route_distance, single_delivery_distance,
+        )
     print(f"Objective: {solution.ObjectiveValue()}")
     vehicle_id = 0
     index = routing.Start(vehicle_id)
     plan_output = "Route for vehicle {}:\n".format(vehicle_id)
-    deadlines = "Deadlines of the packages\nDeadline | Route\n"
+    deadlines = "Deadlines of the packages\nIndex | Deadline | Route | Single delivery distance\n"
+    deadlines += addDeadline(
+        0,
+        -1,
+        0,
+        0,
+    )
+
     route_distance = 0
     while not routing.IsEnd(index):
         plan_output += " {} -> ".format(manager.IndexToNode(index))
         previous_index = index
         index = solution.Value(routing.NextVar(index))
-        route_distance += routing.GetArcCostForVehicle(
+        single_delivery_distance = routing.GetArcCostForVehicle(
             previous_index, index, vehicle_id)
+        route_distance += single_delivery_distance
         package_deadline = packages[index-1]["deadline"] if index != len(packages) + 1 else -1
-        deadlines += "{:8} | {:4}\n".format(package_deadline, route_distance)
+        deadlines += addDeadline(
+            manager.IndexToNode(index),
+            package_deadline,
+            route_distance,
+            single_delivery_distance,
+        )
     plan_output += "{}\n".format(manager.IndexToNode(index))
-    plan_output += "Distance of the route: {}m\n".format(route_distance)
+    plan_output += "Distance of the route: {}\n".format(route_distance)
     print(plan_output)
     print(deadlines)
