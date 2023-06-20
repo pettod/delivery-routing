@@ -17,7 +17,7 @@ def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
     manager = pywrapcp.RoutingIndexManager(
         len(locations),
         1,
-        0,  # Depot 0
+        0,  # Depot is the starting point
     )
     
     # Create the routing model
@@ -28,32 +28,21 @@ def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
         from_node = manager.IndexToNode(from_index)
         to_node = manager.IndexToNode(to_index)
         return distance_matrix[from_node][to_node]
-
     transit_callback_index = routing.RegisterTransitCallback(distanceCallback)
     routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
   
     # Define the maximum distance constraint for each package
     for i in range(len(packages)):
-        dimension_name = "Distance"
+        dimension_name = "Deadline"
         routing.AddDimension(
             transit_callback_index,
-            0,  # no slack
-            max_delivery_distance[i],  # package max delivery distance
-            False,
+            0,  # No slack
+            delivery_deadlines[i],  # Package max delivery distance / deadline
+            True,
             dimension_name,
         )
-        distance_dimension = routing.GetDimensionOrDie(dimension_name)
-        distance_dimension.SetGlobalSpanCostCoefficient(100)
-  
-        # Set the deadline constraint for each package
-        deadline = int(delivery_deadlines[i])
-        routing.AddDimension(
-            transit_callback_index,
-            deadline,
-            deadline,
-            True,
-            "Deadline",
-        )
+        deadline_dimension = routing.GetDimensionOrDie(dimension_name)
+        deadline_dimension.SetGlobalSpanCostCoefficient(100)
   
     # Set the lunch break constraint
     #lunch_break_duration = 60  # minutes
@@ -81,22 +70,28 @@ def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
             route.append(locations[index])
             index = solution.Value(routing.NextVar(index))
         route.append(locations[0])
-        printSolution(manager, routing, solution)
+        printSolution(manager, routing, solution, packages)
         return route
   
     return None
 
 
-def defineData(number_of_packages=10, min_distance_from_depot=10):
-    driver_working_hours = 8
-    depot_coordinates = {"x": 0, "y": 0}
+def defineData(
+        number_of_packages=30,
+        driver_working_hours=8,
+        min_distance_from_depot=10,
+        max_distance_from_depot=50,
+        depot_coordinates={"x": 0, "y": 0},
+    ):
+    max_package_coordinate = depot_coordinates["x"] + max_distance_from_depot
+    min_package_coordinate = depot_coordinates["y"] - max_distance_from_depot
     packages = []
     for i in range(number_of_packages):
 
         # Define coordinates that are far enough from the depot
         while True:
-            x = random.randint(-50, 50)
-            y = random.randint(-50, 50)
+            x = random.randint(min_package_coordinate, max_package_coordinate)
+            y = random.randint(min_package_coordinate, max_package_coordinate)
             if math.sqrt(
                 (x - depot_coordinates["x"])**2 +
                 (y - depot_coordinates["y"])**2
@@ -105,7 +100,7 @@ def defineData(number_of_packages=10, min_distance_from_depot=10):
 
         packages.append({
             "location": i+1,
-            "deadline": random.randint(600, 3000),
+            "deadline": random.randint(600, 700),
             "max_delivery_distance": random.randint(1000, 10000),
             "x": x,
             "y": y,

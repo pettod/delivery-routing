@@ -40,7 +40,6 @@ def plotSolution(depot_coordinates, packages, route):
 def printSolution(manager, routing, solution, packages):
     print(f"Objective: {solution.ObjectiveValue()}")
     vehicle_id = 0
-    total_distance = 0
     index = routing.Start(vehicle_id)
     plan_output = "Route for vehicle {}:\n".format(vehicle_id)
     deadlines = "Deadlines of the packages\nDeadline | Route\n"
