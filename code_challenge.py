@@ -1,30 +1,10 @@
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import math
-import matplotlib.pyplot as plt
 import random
 import numpy as np
 
-
-def printSolution(manager, routing, solution):
-    print(f'Objective: {solution.ObjectiveValue()}')
-    vehicle_id = 0
-    total_distance = 0
-    index = routing.Start(vehicle_id)
-    plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
-    route_distance = 0
-    while not routing.IsEnd(index):
-        plan_output += ' {} -> '.format(manager.IndexToNode(index))
-        previous_index = index
-        index = solution.Value(routing.NextVar(index))
-        route_distance += routing.GetArcCostForVehicle(
-            previous_index, index, vehicle_id)
-    plan_output += '{}\n'.format(manager.IndexToNode(index))
-    plan_output += 'Distance of the route: {}m\n'.format(route_distance)
-    print(plan_output)
-    total_distance += route_distance
-    print('Total Distance of all routes: {}m'.format(total_distance))
-
+from utils import calculateDistanceMatrix, plotSolution, printSolution
 
 
 def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
@@ -66,7 +46,7 @@ def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
         distance_dimension.SetGlobalSpanCostCoefficient(100)
   
         # Set the deadline constraint for each package
-        deadline = int(delivery_deadlines[i] * 60)  # Convert deadlines to minutes
+        deadline = int(delivery_deadlines[i])
         routing.AddDimension(
             transit_callback_index,
             deadline,
@@ -107,44 +87,7 @@ def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
     return None
 
 
-def calculateDistanceMatrix(depot_coordinates, data):
-    distance_matrix = []
-    data = [depot_coordinates] + data
-
-    # Euclidian distance
-    for i in range(len(data)):
-        location_distances = []
-        for j in range(len(data)):
-            location_distances.append(math.sqrt(
-                (data[i]["x"] - data[j]["x"])**2 +
-                (data[i]["y"] - data[j]["y"])**2
-            ))
-        distance_matrix.append(np.array(location_distances))
-    return np.array(distance_matrix)
-
-
-def plotSolution(depot_coordinates, packages, route):
-    plt.plot(depot_coordinates["x"], depot_coordinates["y"], "ro")
-    for p in packages:
-        plt.plot(p["x"], p["y"], "bo")
-
-    route_x = []
-    route_y = []    
-    for i in range(len(route)):
-        if route[i] == "Depot":
-            route_x.append(depot_coordinates["x"])
-            route_y.append(depot_coordinates["y"])
-        else:
-            route_x.append(packages[route[i]-1]["x"])
-            route_y.append(packages[route[i]-1]["y"])
-    plt.plot(route_x, route_y, color="tab:orange")
-    plt.show()
-
-
-def main():
-    number_of_packages = 100
-
-    # Data
+def defineData(number_of_packages=10, min_distance_from_depot=10):
     driver_working_hours = 8
     depot_coordinates = {"x": 0, "y": 0}
     packages = []
@@ -154,21 +97,35 @@ def main():
         while True:
             x = random.randint(-50, 50)
             y = random.randint(-50, 50)
-            if math.sqrt((x - depot_coordinates["x"])**2 + (y - depot_coordinates["y"])**2) >= 10:
+            if math.sqrt(
+                (x - depot_coordinates["x"])**2 +
+                (y - depot_coordinates["y"])**2
+            ) >= min_distance_from_depot:
                 break
 
         packages.append({
             "location": i+1,
-            "deadline": random.randint(10, 50),
+            "deadline": random.randint(600, 3000),
             "max_delivery_distance": random.randint(1000, 10000),
             "x": x,
             "y": y,
         })
-    distance_matrix = calculateDistanceMatrix(depot_coordinates, packages)
+    return (
+        packages,
+        depot_coordinates,
+        driver_working_hours,
+    )
 
+
+def main():
+    (
+        packages,
+        depot_coordinates,
+        driver_working_hours,
+    ) = defineData()
+    distance_matrix = calculateDistanceMatrix(depot_coordinates, packages)
     route = solveDeliveryRouting(
         packages, distance_matrix, driver_working_hours)
-
     if route:
         print("Optimal route:", route)
         plotSolution(depot_coordinates, packages, route)
