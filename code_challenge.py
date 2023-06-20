@@ -7,11 +7,13 @@ import numpy as np
 from utils import calculateDistanceMatrix, plotSolution, printSolution
 
 
-def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
+def solveDeliveryRouting(
+        packages, distance_matrix, driver_working_hours, 
+        driver_max_single_delivery_distance,
+    ):
     # Read data
     locations = ["Depot"] + [p["location"] for p in packages]
     delivery_deadlines = [p["deadline"] for p in packages]
-    max_delivery_distance = [p["max_delivery_distance"] for p in packages]
 
     # Create the routing index manager
     manager = pywrapcp.RoutingIndexManager(
@@ -79,6 +81,7 @@ def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
 def defineData(
         number_of_packages=30,
         driver_working_hours=8,
+        driver_max_single_delivery_distance=200,
         min_distance_from_depot=10,
         max_distance_from_depot=50,
         depot_coordinates={"x": 0, "y": 0},
@@ -101,7 +104,6 @@ def defineData(
         packages.append({
             "location": i+1,
             "deadline": random.randint(600, 700),
-            "max_delivery_distance": random.randint(1000, 10000),
             "x": x,
             "y": y,
         })
@@ -109,6 +111,7 @@ def defineData(
         packages,
         depot_coordinates,
         driver_working_hours,
+        driver_max_single_delivery_distance,
     )
 
 
@@ -117,10 +120,13 @@ def main():
         packages,
         depot_coordinates,
         driver_working_hours,
+        driver_max_single_delivery_distance,
     ) = defineData()
     distance_matrix = calculateDistanceMatrix(depot_coordinates, packages)
     route = solveDeliveryRouting(
-        packages, distance_matrix, driver_working_hours)
+        packages, distance_matrix, driver_working_hours, 
+        driver_max_single_delivery_distance,
+    )
     if route:
         print("Optimal route:", route)
         plotSolution(depot_coordinates, packages, route)
