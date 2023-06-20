@@ -17,11 +17,12 @@ def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
         1,
         0,  # Depot 0
     )
+    #print(manager.GetEndIndex(0))
     
     # Create the routing model
     routing = pywrapcp.RoutingModel(manager)
   
-    # Define the distance callback.
+    # Define the distance callback
     def distanceCallback(from_index, to_index):
         return distance_matrix[from_index][to_index]
 
@@ -47,7 +48,7 @@ def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
             "Deadline",
         )
   
-    # Set the lunch break constraint.
+    # Set the lunch break constraint
     lunch_break_duration = 60  # minutes
     routing.AddDimension(
         transit_callback_index,
@@ -56,8 +57,6 @@ def solveDeliveryRouting(packages, distance_matrix, driver_working_hours):
         True,
         "Working Hours",
     )
-
-    #routing.Set
 
     # Set up search parameters
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
@@ -115,16 +114,21 @@ def plotSolution(depot_coordinates, packages, route):
 
 
 def main():
+    number_of_packages = 10
+
     # Data
+    driver_working_hours = 8
     depot_coordinates = {"x": 0, "y": 0}
     packages = []
-    for i in range(100):
+    for i in range(number_of_packages):
+
         # Define coordinates that are far enough from the depot
         while True:
             x = random.randint(-50, 50)
             y = random.randint(-50, 50)
             if math.sqrt((x - depot_coordinates["x"])**2 + (y - depot_coordinates["y"])**2) >= 10:
                 break
+
         packages.append({
             "location": i+1,
             "deadline": random.randint(10, 50),
@@ -133,7 +137,6 @@ def main():
             "y": y,
         })
     distance_matrix = calculateDistanceMatrix(depot_coordinates, packages)
-    driver_working_hours = 8
 
     route = solveDeliveryRouting(
         packages, distance_matrix, driver_working_hours)
