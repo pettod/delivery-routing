@@ -7,6 +7,7 @@ def getData(
         number_of_packages=30,
         driver_working_hours=8,
         driver_max_single_delivery_distance=33,
+        driver_lunch_break_duration=1,
         min_distance_from_depot=10,
         max_distance_from_depot=50,
         depot_coordinates={"x": 0, "y": 0},
@@ -41,4 +42,5 @@ def getData(
         depot_coordinates,
         driver_working_hours,
         driver_max_single_delivery_distance,
+        driver_lunch_break_duration,
     )
