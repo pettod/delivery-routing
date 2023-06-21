@@ -1,10 +1,9 @@
-from ortools.constraint_solver import routing_enums_pb2
-from ortools.constraint_solver import pywrapcp
+from ortools.constraint_solver import routing_enums_pb2, pywrapcp
 import math
 import random
 import numpy as np
 
-from utils import calculateDistanceMatrix, plotSolution, printSolution
+from utils import calculateDistanceMatrix, plotSolution, printSolution, seedEverything
 
 
 def solveDeliveryRouting(
@@ -34,8 +33,8 @@ def solveDeliveryRouting(
     routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
   
     # Define the maximum distance constraint for each package
+    dimension_name = "Deadline"
     for i in range(len(packages)):
-        dimension_name = "Deadline"
         routing.AddDimension(
             transit_callback_index,
             0,  # No slack
@@ -43,8 +42,8 @@ def solveDeliveryRouting(
             True,
             dimension_name,
         )
-        deadline_dimension = routing.GetDimensionOrDie(dimension_name)
-        deadline_dimension.SetGlobalSpanCostCoefficient(100)
+    deadline_dimension = routing.GetDimensionOrDie(dimension_name)
+    deadline_dimension.SetGlobalSpanCostCoefficient(100)
   
     # Set the lunch break constraint
     #lunch_break_duration = 60  # minutes
@@ -56,16 +55,14 @@ def solveDeliveryRouting(
     #    "Working Hours",
     #)
 
-    # Set up search parameters
+    # Set up search parameters and solve
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+    search_parameters.time_limit.seconds = 30
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
-
-    # Solve the problem
     solution = routing.SolveWithParameters(search_parameters)
   
     if solution:
-        # Get the optimal route
         route = []
         index = routing.Start(0)
         while not routing.IsEnd(index):
@@ -86,6 +83,7 @@ def defineData(
         max_distance_from_depot=50,
         depot_coordinates={"x": 0, "y": 0},
     ):
+    seedEverything(231127)
     max_package_coordinate = depot_coordinates["x"] + max_distance_from_depot
     min_package_coordinate = depot_coordinates["y"] - max_distance_from_depot
     packages = []
@@ -101,9 +99,12 @@ def defineData(
             ) >= min_distance_from_depot:
                 break
 
+        # Force few short deadlines
+        deadline = random.randint(5000, 10000) #if i > 1 else random.randint(150, 200)
+
         packages.append({
             "location": i+1,
-            "deadline": random.randint(600, 700),
+            "deadline": deadline,
             "x": x,
             "y": y,
         })

@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 import math
+import os
 
 
 def calculateDistanceMatrix(depot_coordinates, data):
@@ -35,6 +37,12 @@ def plotSolution(depot_coordinates, packages, route):
             route_y.append(packages[route[i]-1]["y"])
     plt.plot(route_x, route_y, color="tab:orange")
     plt.show()
+
+
+def seedEverything(seed):
+    random.seed(seed)
+    os.environ["PYTHONASHSEED"] = str(seed)
+    np.random.seed(seed)
 
 
 def printSolution(manager, routing, solution, packages):
