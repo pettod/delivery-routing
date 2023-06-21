@@ -63,7 +63,7 @@ class Routing:
                     transit_callback_index,
                     0,
                     self.packages[i]["deadline"],  # Package max delivery distance or deadline
-                    True,
+                    True,  # Cumulate the distance of the route this far
                     "Deadline",
                     100,
                 )
@@ -72,10 +72,10 @@ class Routing:
         if 2 in constraints:
             self.addDimension(
                 transit_callback_index,
-                self.driver_lunch_break_duration,
-                self.driver_max_single_delivery_distance,
-                True,
-                "Working hours",
+                self.driver_lunch_break_duration,  # Have to stay this long in a node
+                self.driver_lunch_break_duration + self.driver_max_single_delivery_distance,  # Don't shorten max single driving distance
+                True,  # Cumulate lunch break to the route distance
+                "Lunch break",
                 100,
             )
 
@@ -85,7 +85,7 @@ class Routing:
                 transit_callback_index,
                 0,
                 self.driver_max_single_delivery_distance,
-                True,
+                False,  # Don't cumulate previous distances
                 "Driver max single delivery distance",
                 100,
             )
@@ -94,13 +94,12 @@ class Routing:
         if 4 in constraints:
             self.addDimension(
                 transit_callback_index,
-                0,  # no slack
-                self.driver_working_hours * 60,  # vehicle maximum travel distance (1 distance unit per minute)
-                False,  # start cumul to zero
+                0,  # no slack / waiting in a node
+                self.driver_working_hours * 60,  # vehicle max travel distance (1 distance unit per minute)
+                True,  # Cumulate the distance
                 "Working hours",
                 100,
             )
-
 
     def solve(self):
         self.addConstraints()
