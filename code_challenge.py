@@ -103,27 +103,26 @@ class Routing:
         solution = self.routing.SolveWithParameters(search_parameters)
     
         if solution:
-            route = []
-            index = self.routing.Start(0)
-            while not self.routing.IsEnd(index):
-                route.append(self.locations[index])
-                index = solution.Value(self.routing.NextVar(index))
-            route.append(self.locations[0])
-            printSolution(self.manager, self.routing, solution, self.data["packages"])
-            return route
-    
-        return None
+            routes = []
+            for i in range(self.data["number_of_vehicles"]):
+                route = []
+                index = self.routing.Start(i)
+                while not self.routing.IsEnd(index):
+                    route.append(self.locations[self.manager.IndexToNode(index)])
+                    index = solution.Value(self.routing.NextVar(index))
+                route.append(self.locations[0])
+                routes.append(route)
+                print(f"Optimal route {i}:", route)
+            printSolution(self.manager, self.routing, solution, self.data)
+            plotSolution(self.data["depot_coordinates"], self.data["packages"], routes)
+        else:
+            print("No feasible solution found.")
 
 
 def main():
     data = getData()
     routing = Routing(data)
-    route = routing.solve()
-    if route:
-        print("Optimal route:", route)
-        plotSolution(data["depot_coordinates"], data["packages"], route)
-    else:
-        print("No feasible solution found.")
+    routing.solve()
 
 
 main()
