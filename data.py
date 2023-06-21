@@ -8,6 +8,7 @@ def getData(
         driver_working_hours=8,
         driver_max_single_delivery_distance=33,
         driver_lunch_break_duration=1,
+        number_of_vehicles=1,
         min_distance_from_depot=10,
         max_distance_from_depot=50,
         depot_coordinates={"x": 0, "y": 0},
@@ -37,10 +38,11 @@ def getData(
             "x": x,
             "y": y,
         })
-    return (
-        packages,
-        depot_coordinates,
-        driver_working_hours,
-        driver_max_single_delivery_distance,
-        driver_lunch_break_duration,
-    )
+    return {
+        "packages": packages,
+        "depot_coordinates": depot_coordinates,
+        "driver_working_hours": driver_working_hours,
+        "driver_max_single_delivery_distance": driver_max_single_delivery_distance,
+        "driver_lunch_break_duration": driver_lunch_break_duration,
+        "number_of_vehicles": number_of_vehicles,
+    }

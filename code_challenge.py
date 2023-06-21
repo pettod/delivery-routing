@@ -5,25 +5,16 @@ from utils import calculateDistanceMatrix, plotSolution, printSolution
 
 
 class Routing:
-    def __init__(
-            self,
-            packages,
-            depot_coordinates,
-            driver_working_hours, 
-            driver_max_single_delivery_distance,
-            driver_lunch_break_duration,
-        ):
-        self.packages = packages
-        self.driver_working_hours = driver_working_hours
-        self.driver_max_single_delivery_distance = driver_max_single_delivery_distance
-        self.driver_lunch_break_duration = driver_lunch_break_duration
-        self.distance_matrix = calculateDistanceMatrix(depot_coordinates, packages)
-        self.locations = ["Depot"] + [p["location"] for p in self.packages]
+    def __init__(self, data):
+        self.data = data
+        self.distance_matrix = calculateDistanceMatrix(
+            self.data["depot_coordinates"], self.data["packages"])
+        self.locations = ["Depot"] + [p["location"] for p in self.data["packages"]]
 
         # Create the routing index manager
         self.manager = pywrapcp.RoutingIndexManager(
-            1 + len(packages),
-            1,  # 1 vehicle
+            len(self.distance_matrix),
+            self.data["number_of_vehicles"],
             0,  # Depot is the starting point
         )
         self.routing = pywrapcp.RoutingModel(self.manager)
@@ -62,7 +53,7 @@ class Routing:
                 self.addDimension(
                     transit_callback_index,
                     0,
-                    self.packages[i]["deadline"],  # Package max delivery distance or deadline
+                    self.data["packages"][i]["deadline"],  # Package max delivery distance or deadline
                     True,  # Cumulate the distance of the route this far
                     "Deadline",
                     100,
@@ -72,8 +63,8 @@ class Routing:
         if 2 in constraints:
             self.addDimension(
                 transit_callback_index,
-                self.driver_lunch_break_duration,  # Have to stay this long in a node
-                self.driver_lunch_break_duration + self.driver_max_single_delivery_distance,  # Don't shorten max single driving distance
+                self.data["driver_lunch_break_duration"],  # Have to stay this long in a node
+                self.data["driver_lunch_break_duration"] + self.data["driver_max_single_delivery_distance"],  # Don't shorten max single driving distance
                 True,  # Cumulate lunch break to the route distance
                 "Lunch break",
                 100,
@@ -84,7 +75,7 @@ class Routing:
             self.addDimension(
                 transit_callback_index,
                 0,
-                self.driver_max_single_delivery_distance,
+                self.data["driver_max_single_delivery_distance"],
                 False,  # Don't cumulate previous distances
                 "Driver max single delivery distance",
                 100,
@@ -95,7 +86,7 @@ class Routing:
             self.addDimension(
                 transit_callback_index,
                 0,  # no slack / waiting in a node
-                self.driver_working_hours * 60,  # vehicle max travel distance (1 distance unit per minute)
+                self.data["driver_working_hours"] * 60,  # vehicle max travel distance (1 distance unit per minute)
                 True,  # Cumulate the distance
                 "Working hours",
                 100,
@@ -118,31 +109,19 @@ class Routing:
                 route.append(self.locations[index])
                 index = solution.Value(self.routing.NextVar(index))
             route.append(self.locations[0])
-            printSolution(self.manager, self.routing, solution, self.packages)
+            printSolution(self.manager, self.routing, solution, self.data["packages"])
             return route
     
         return None
 
 
 def main():
-    (
-        packages,
-        depot_coordinates,
-        driver_working_hours,
-        driver_max_single_delivery_distance,
-        driver_lunch_break_duration,
-    ) = getData()
-    routing = Routing(
-        packages,
-        depot_coordinates,
-        driver_working_hours,
-        driver_max_single_delivery_distance,
-        driver_lunch_break_duration,
-    )
+    data = getData()
+    routing = Routing(data)
     route = routing.solve()
     if route:
         print("Optimal route:", route)
-        plotSolution(depot_coordinates, packages, route)
+        plotSolution(data["depot_coordinates"], data["packages"], route)
     else:
         print("No feasible solution found.")
 
