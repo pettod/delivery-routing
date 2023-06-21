@@ -10,18 +10,12 @@ def solveDeliveryRouting(
         packages, distance_matrix, driver_working_hours, 
         driver_max_single_delivery_distance,
     ):
-    # Read data
-    locations = ["Depot"] + [p["location"] for p in packages]
-    delivery_deadlines = [p["deadline"] for p in packages]
-
     # Create the routing index manager
     manager = pywrapcp.RoutingIndexManager(
-        len(locations),
-        1,
+        1 + len(packages),
+        1,  # 1 vehicle
         0,  # Depot is the starting point
     )
-    
-    # Create the routing model
     routing = pywrapcp.RoutingModel(manager)
   
     # Define the distance callback
@@ -63,6 +57,7 @@ def solveDeliveryRouting(
     solution = routing.SolveWithParameters(search_parameters)
   
     if solution:
+        locations = ["Depot"] + [p["location"] for p in packages]
         route = []
         index = routing.Start(0)
         while not routing.IsEnd(index):
@@ -83,7 +78,7 @@ def defineData(
         max_distance_from_depot=50,
         depot_coordinates={"x": 0, "y": 0},
     ):
-    seedEverything(231127)
+    seedEverything(23114)
     max_package_coordinate = depot_coordinates["x"] + max_distance_from_depot
     min_package_coordinate = depot_coordinates["y"] - max_distance_from_depot
     packages = []
