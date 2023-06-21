@@ -1,114 +1,89 @@
 from ortools.constraint_solver import routing_enums_pb2, pywrapcp
-import math
-import random
-import numpy as np
 
-from utils import calculateDistanceMatrix, plotSolution, printSolution, seedEverything
+from data import getData
+from utils import calculateDistanceMatrix, plotSolution, printSolution
 
 
-def solveDeliveryRouting(
-        packages, distance_matrix, driver_working_hours, 
-        driver_max_single_delivery_distance,
-    ):
-    # Create the routing index manager
-    manager = pywrapcp.RoutingIndexManager(
-        1 + len(packages),
-        1,  # 1 vehicle
-        0,  # Depot is the starting point
-    )
-    routing = pywrapcp.RoutingModel(manager)
-  
-    # Define the distance callback
-    def distanceCallback(from_index, to_index):
-        from_node = manager.IndexToNode(from_index)
-        to_node = manager.IndexToNode(to_index)
-        return distance_matrix[from_node][to_node]
-    transit_callback_index = routing.RegisterTransitCallback(distanceCallback)
-    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
-  
-    # Define the maximum distance constraint for each package
-    dimension_name = "Deadline"
-    for i in range(len(packages)):
-        routing.AddDimension(
-            transit_callback_index,
-            0,  # No slack
-            delivery_deadlines[i],  # Package max delivery distance / deadline
-            True,
-            dimension_name,
+class Routing:
+    def __init__(
+            self, packages, depot_coordinates, driver_working_hours, 
+            driver_max_single_delivery_distance,):
+        self.driver_working_hours = driver_working_hours
+        self.driver_max_single_delivery_distance = driver_max_single_delivery_distance
+        self.packages = packages
+        self.distance_matrix = calculateDistanceMatrix(depot_coordinates, packages)
+        self.locations = ["Depot"] + [p["location"] for p in self.packages]
+
+        # Create the routing index manager
+        self.manager = pywrapcp.RoutingIndexManager(
+            1 + len(packages),
+            1,  # 1 vehicle
+            0,  # Depot is the starting point
         )
-    deadline_dimension = routing.GetDimensionOrDie(dimension_name)
-    deadline_dimension.SetGlobalSpanCostCoefficient(100)
-  
-    # Set the lunch break constraint
-    #lunch_break_duration = 60  # minutes
-    #routing.AddDimension(
-    #    transit_callback_index,
-    #    lunch_break_duration,
-    #    driver_working_hours * 60,  # working hours in minutes
-    #    True,
-    #    "Working Hours",
-    #)
+        self.routing = pywrapcp.RoutingModel(self.manager)
 
-    # Set up search parameters and solve
-    search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-    search_parameters.time_limit.seconds = 30
-    search_parameters.first_solution_strategy = (
-        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
-    solution = routing.SolveWithParameters(search_parameters)
-  
-    if solution:
-        locations = ["Depot"] + [p["location"] for p in packages]
-        route = []
-        index = routing.Start(0)
-        while not routing.IsEnd(index):
-            route.append(locations[index])
-            index = solution.Value(routing.NextVar(index))
-        route.append(locations[0])
-        printSolution(manager, routing, solution, packages)
-        return route
-  
-    return None
+    def addConstraints(self):
+        # Define the distance callback
+        def distanceCallback(from_index, to_index):
+            from_node = self.manager.IndexToNode(from_index)
+            to_node = self.manager.IndexToNode(to_index)
+            return self.distance_matrix[from_node][to_node]
+        transit_callback_index = self.routing.RegisterTransitCallback(distanceCallback)
+        self.routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
+        # Define the maximum distance constraint for each package
+        dimension_name = "Deadline"
+        for i in range(len(self.packages)):
+            self.routing.AddDimension(
+                transit_callback_index,
+                0,  # No slack
+                self.packages[i]["deadline"],  # Package max delivery distance / deadline
+                True,
+                dimension_name,
+            )
+        #deadline_dimension = routing.GetDimensionOrDie(dimension_name)
+        #deadline_dimension.SetGlobalSpanCostCoefficient(100)
+    
+        # Set the lunch break constraint
+        #lunch_break_duration = 60  # minutes
+        #routing.AddDimension(
+        #    transit_callback_index,
+        #    lunch_break_duration,
+        #    driver_working_hours * 60,  # working hours in minutes
+        #    True,
+        #    "Working Hours",
+        #)
 
-def defineData(
-        number_of_packages=30,
-        driver_working_hours=8,
-        driver_max_single_delivery_distance=200,
-        min_distance_from_depot=10,
-        max_distance_from_depot=50,
-        depot_coordinates={"x": 0, "y": 0},
-    ):
-    seedEverything(23114)
-    max_package_coordinate = depot_coordinates["x"] + max_distance_from_depot
-    min_package_coordinate = depot_coordinates["y"] - max_distance_from_depot
-    packages = []
-    for i in range(number_of_packages):
+        # Set driver max single delivery distance
+        #routing.AddDimension(
+        #    transit_callback_index,
+        #    0,
+        #    driver_max_single_delivery_distance,
+        #    True,
+        #    "Driver max single delivery distance",
+        #)
 
-        # Define coordinates that are far enough from the depot
-        while True:
-            x = random.randint(min_package_coordinate, max_package_coordinate)
-            y = random.randint(min_package_coordinate, max_package_coordinate)
-            if math.sqrt(
-                (x - depot_coordinates["x"])**2 +
-                (y - depot_coordinates["y"])**2
-            ) >= min_distance_from_depot:
-                break
+    def solve(self):
+        self.addConstraints()
 
-        # Force few short deadlines
-        deadline = random.randint(5000, 10000) #if i > 1 else random.randint(150, 200)
-
-        packages.append({
-            "location": i+1,
-            "deadline": deadline,
-            "x": x,
-            "y": y,
-        })
-    return (
-        packages,
-        depot_coordinates,
-        driver_working_hours,
-        driver_max_single_delivery_distance,
-    )
+        # Set up search parameters and solve
+        search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+        search_parameters.time_limit.seconds = 30
+        search_parameters.first_solution_strategy = (
+            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+        solution = self.routing.SolveWithParameters(search_parameters)
+    
+        if solution:
+            route = []
+            index = self.routing.Start(0)
+            while not self.routing.IsEnd(index):
+                route.append(self.locations[index])
+                index = solution.Value(self.routing.NextVar(index))
+            route.append(self.locations[0])
+            printSolution(self.manager, self.routing, solution, self.packages)
+            return route
+    
+        return None
 
 
 def main():
@@ -117,12 +92,12 @@ def main():
         depot_coordinates,
         driver_working_hours,
         driver_max_single_delivery_distance,
-    ) = defineData()
-    distance_matrix = calculateDistanceMatrix(depot_coordinates, packages)
-    route = solveDeliveryRouting(
-        packages, distance_matrix, driver_working_hours, 
+    ) = getData()
+    routing = Routing(
+        packages, depot_coordinates, driver_working_hours, 
         driver_max_single_delivery_distance,
     )
+    route = routing.solve()
     if route:
         print("Optimal route:", route)
         plotSolution(depot_coordinates, packages, route)
