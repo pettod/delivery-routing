@@ -49,7 +49,7 @@ class Routing:
 
         # Max distance constraint for each package
         if 1 in constraints:
-            for i in range(len(self.packages)):
+            for i in range(len(self.data["packages"])):
                 self.addDimension(
                     transit_callback_index,
                     0,

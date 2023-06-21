@@ -73,7 +73,7 @@ def printSolution(manager, routing, solution, data):
                 previous_index, index, vehicle_id)
             route_distance += single_delivery_distance
             i = manager.IndexToNode(index)
-            package_deadline = data["packages"][i]["deadline"] if i < len(data["packages"]) else -1
+            package_deadline = data["packages"][i-1]["deadline"] if i != 0 else -1
             deadlines += addDeadline(
                 i,
                 package_deadline,
