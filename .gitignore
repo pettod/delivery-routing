@@ -2,3 +2,5 @@
 *.pages
 *.vscode
 *.pyc
+*.png
+*.DS_Store
