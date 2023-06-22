@@ -14,3 +14,4 @@ class CONFIG:
 
     # Optimization
     SEARCH_TIME_LIMIT = 2
+    RANDOM_SEED = 23114  # None

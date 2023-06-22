@@ -22,11 +22,11 @@ def calculateDistanceMatrix(depot_coordinates, data):
 
 
 def plotSolution(depot_coordinates, packages, routes):
-    plt.plot(depot_coordinates["x"], depot_coordinates["y"], "ro")
+    plt.plot(depot_coordinates["x"], depot_coordinates["y"], "r^", markersize=15)
     for p in packages:
-        plt.plot(p["x"], p["y"], "bo")
+        plt.plot(p["x"], p["y"], "ko")
 
-    for j, route in enumerate(routes):
+    for route in routes:
         route_x = []
         route_y = []
         for i in range(len(route)):

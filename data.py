@@ -4,9 +4,9 @@ from config import CONFIG
 from utils import seedEverything
 
 
-def getData(get_always_the_same_data=True):
-    if get_always_the_same_data:
-        seedEverything(23114)  # Have the same randomness
+def getData():
+    if CONFIG.RANDOM_SEED:
+        seedEverything(CONFIG.RANDOM_SEED)  # Use the same randomness
 
     # Read config data
     number_of_packages = CONFIG.NUMBER_OF_PACKAGES
