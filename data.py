@@ -1,19 +1,25 @@
 import math
 import random
+from config import CONFIG
 from utils import seedEverything
 
 
-def getData(
-        number_of_packages=30,
-        driver_working_hours=8,
-        driver_max_single_delivery_distance=33,
-        driver_lunch_break_duration=1,
-        number_of_vehicles=1,
-        min_distance_from_depot=10,
-        max_distance_from_depot=50,
-        depot_coordinates={"x": 0, "y": 0},
-    ):
-    seedEverything(23114)
+def getData(get_always_the_same_data=True):
+    if get_always_the_same_data:
+        seedEverything(23114)  # Have the same randomness
+
+    # Read config data
+    number_of_packages = CONFIG.NUMBER_OF_PACKAGES
+    driver_working_hours = CONFIG.DRIVER_WORKING_HOURS
+    driver_max_single_delivery_distance = CONFIG.DRIVER_MAX_SINGLE_DELIVERY_DISTANCE
+    driver_lunch_break_duration = CONFIG.DRIVER_LUNCH_BREAK_DURATION
+    number_of_vehicles = CONFIG.NUMBER_OF_VEHICLES
+    min_distance_from_depot = CONFIG.MIN_DISTANCE_FROM_DEPOT
+    max_distance_from_depot = CONFIG.MAX_DISTANCE_FROM_DEPOT
+    depot_coordinates = CONFIG.DEPOT_COORDINATES
+    deadline_range = CONFIG.DEADLINE_RANGE
+
+    # Define the locations of the packages
     max_package_coordinate = depot_coordinates["x"] + max_distance_from_depot
     min_package_coordinate = depot_coordinates["y"] - max_distance_from_depot
     packages = []
@@ -29,8 +35,10 @@ def getData(
             ) >= min_distance_from_depot:
                 break
 
-        # Force few short deadlines
-        deadline = random.randint(5000, 10000) #if i > 1 else 150 #random.randint(150, 200)
+        if deadline_range:
+            deadline = random.randint(deadline_range[0], deadline_range[0])
+        else:
+            deadline = 0
 
         packages.append({
             "location": i+1,

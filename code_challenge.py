@@ -1,5 +1,6 @@
 from ortools.constraint_solver import routing_enums_pb2, pywrapcp
 
+from config import CONFIG
 from data import getData
 from utils import calculateDistanceMatrix, plotSolution, printSolution
 
@@ -45,10 +46,8 @@ class Routing:
         transit_callback_index = self.routing.RegisterTransitCallback(distanceCallback)
         self.routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
-        constraints = []
-
         # Max distance constraint for each package
-        if 1 in constraints:
+        if CONFIG.DEADLINE_RANGE:
             for i in range(len(self.data["packages"])):
                 self.addDimension(
                     transit_callback_index,
@@ -60,7 +59,7 @@ class Routing:
                 )
     
         # Set the lunch break constraint
-        if 2 in constraints:
+        if CONFIG.DRIVER_LUNCH_BREAK_DURATION:
             self.addDimension(
                 transit_callback_index,
                 self.data["driver_lunch_break_duration"],  # Have to stay this long in a node
@@ -71,7 +70,7 @@ class Routing:
             )
 
         # Driver max single delivery distance
-        if 3 in constraints:
+        if CONFIG.DRIVER_MAX_SINGLE_DELIVERY_DISTANCE:
             self.addDimension(
                 transit_callback_index,
                 0,
@@ -82,7 +81,7 @@ class Routing:
             )
 
         # Driver max working hours
-        if 4 in constraints:
+        if CONFIG.DRIVER_WORKING_HOURS:
             self.addDimension(
                 transit_callback_index,
                 0,  # no slack / waiting in a node
@@ -97,10 +96,27 @@ class Routing:
 
         # Set up search parameters and solve
         search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-        search_parameters.time_limit.seconds = 20
-        search_parameters.first_solution_strategy = (
-            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
-        solution = self.routing.SolveWithParameters(search_parameters)
+        search_parameters.time_limit.seconds = CONFIG.SEARCH_TIME_LIMIT
+
+        # Try different strategies if some are too slow to find a solution
+        solution_strategies = [
+            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC,
+            routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION,
+            routing_enums_pb2.FirstSolutionStrategy.BEST_INSERTION,
+            routing_enums_pb2.FirstSolutionStrategy.CHRISTOFIDES,
+            routing_enums_pb2.FirstSolutionStrategy.ALL_UNPERFORMED,
+            routing_enums_pb2.FirstSolutionStrategy.EVALUATOR_STRATEGY,
+            routing_enums_pb2.FirstSolutionStrategy.FIRST_UNBOUND_MIN_VALUE,
+            routing_enums_pb2.FirstSolutionStrategy.GLOBAL_CHEAPEST_ARC,
+            routing_enums_pb2.FirstSolutionStrategy.LOCAL_CHEAPEST_ARC,
+            routing_enums_pb2.FirstSolutionStrategy.LOCAL_CHEAPEST_COST_INSERTION,
+            routing_enums_pb2.FirstSolutionStrategy.LOCAL_CHEAPEST_INSERTION,
+        ]
+        for strategy in solution_strategies:
+            search_parameters.first_solution_strategy = strategy
+            solution = self.routing.SolveWithParameters(search_parameters)
+            if solution:
+                break
     
         if solution:
             routes = []
