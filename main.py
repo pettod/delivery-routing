@@ -1,8 +1,8 @@
 from ortools.constraint_solver import routing_enums_pb2, pywrapcp
 
 from config import CONFIG
-from data import getData
-from utils import calculateDistanceMatrix, plotSolution, printSolution
+from src.data import getData
+from src.utils import calculateDistanceMatrix, plotSolution, printSolution
 
 
 class Routing:

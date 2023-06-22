@@ -1,7 +1,7 @@
 import math
 import random
 from config import CONFIG
-from utils import seedEverything
+from src.utils import seedEverything
 
 
 def getData():
