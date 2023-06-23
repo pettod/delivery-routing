@@ -6,7 +6,7 @@ Using [Google OR Tools](https://developers.google.com/optimization/introduction)
 
 - Minimize traveling distance
 - N number of vehicles
-- N number of packages
+- M number of packages
 - Delivery deadlines of the packages
 - Driver's working hours
 - Driver's maximum single delivery distance
