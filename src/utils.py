@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import numpy as np
 import random
 import math
@@ -19,6 +20,39 @@ def calculateDistanceMatrix(depot_coordinates, data):
             ))
         distance_matrix.append(np.array(location_distances))
     return np.array(distance_matrix)
+
+
+def savePlotImages(depot_coordinates, packages, routes):
+    plt.plot(depot_coordinates["x"], depot_coordinates["y"], "r^", markersize=15)
+    for p in packages:
+        plt.plot(p["x"], p["y"], "ko")
+
+    output_path = "output_frames"
+    number_of_first_frame_copies = 25
+    number_of_last_frame_copies = 100
+    max_number_of_trips = max([len(route) for route in routes])
+    route_x = [[] for i in range(len(routes))]
+    route_y = [[] for i in range(len(routes))]
+    for i in range(max_number_of_trips):
+        for j, route in enumerate(routes):
+            if i >= len(route):
+                print(i)
+                continue
+            elif route[i] == "Depot":
+                route_x[j].append(depot_coordinates["x"])
+                route_y[j].append(depot_coordinates["y"])
+            else:
+                route_x[j].append(packages[route[i]-1]["x"])
+                route_y[j].append(packages[route[i]-1]["y"])
+            plt.axis("off")
+            plt.plot(route_x[j], route_y[j], color=list(mcolors.TABLEAU_COLORS)[j], linewidth=3)
+        plt.savefig(f"{output_path}/{i}.png", dpi=200, bbox_inches="tight")
+        if i == 0:
+            for k in range(number_of_first_frame_copies):
+                plt.savefig(f"{output_path}/{i}_{k}.png", dpi=200, bbox_inches="tight")
+    
+    for k in range(number_of_last_frame_copies):
+        plt.savefig(f"{output_path}/{i}_{k}.png", dpi=200, bbox_inches="tight")
 
 
 def plotSolution(depot_coordinates, packages, routes):
