@@ -2,7 +2,7 @@
 
 ## Introduction
 
-![routing](https://github.com/pettod/delivery-routing/assets/33998401/60a148f3-8172-4861-82a9-6a31ae8ff400)
+<img width="640" src="https://github.com/pettod/delivery-routing/assets/33998401/60a148f3-8172-4861-82a9-6a31ae8ff400">
 
 Using [Google OR Tools](https://developers.google.com/optimization/introduction) to optimize Vehicle Routing Problem with constraints. The constraints are as follows:
 
