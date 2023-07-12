@@ -4,6 +4,7 @@ import numpy as np
 import random
 import math
 import os
+from PIL import Image
 
 
 def calculateDistanceMatrix(depot_coordinates, data):
@@ -30,6 +31,7 @@ def savePlotImages(depot_coordinates, packages, routes):
     output_path = "output_frames"
     number_of_first_frame_copies = 25
     number_of_last_frame_copies = 100
+    number_of_transition_frames = 20
     max_number_of_trips = max([len(route) for route in routes])
     route_x = [[] for i in range(len(routes))]
     route_y = [[] for i in range(len(routes))]
@@ -47,12 +49,22 @@ def savePlotImages(depot_coordinates, packages, routes):
             plt.axis("off")
             plt.plot(route_x[j], route_y[j], color=list(mcolors.TABLEAU_COLORS)[j], linewidth=3)
         plt.savefig(f"{output_path}/{i}.png", dpi=200, bbox_inches="tight")
+
+        # Copy the first frame
         if i == 0:
             for k in range(number_of_first_frame_copies):
                 plt.savefig(f"{output_path}/{i}_{k}.png", dpi=200, bbox_inches="tight")
-    
+
+    # Copy the last frame
     for k in range(number_of_last_frame_copies):
-        plt.savefig(f"{output_path}/{i}_{k}.png", dpi=200, bbox_inches="tight")
+        plt.savefig(f"{output_path}/{i+1}_{k}.png", dpi=200, bbox_inches="tight")
+
+    # Create smooth transition
+    first_image = Image.open(f"{output_path}/0.png")
+    last_image = Image.open(f"{output_path}/{max_number_of_trips-1}.png")
+    for l in range(1, 1+number_of_transition_frames):
+        blended = Image.blend(last_image, first_image, alpha=l/number_of_transition_frames)
+        blended.save(f"{output_path}/{i+2}_{k}_{l}.png")
 
 
 def plotSolution(depot_coordinates, packages, routes):

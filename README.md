@@ -1,6 +1,6 @@
 # Package delivery routing optimization
 
-<img width="640" src="https://github.com/pettod/delivery-routing/assets/33998401/60a148f3-8172-4861-82a9-6a31ae8ff400">
+<img width="640" src="https://github.com/pettod/delivery-routing/assets/33998401/8bda2271-aa07-48fe-8a4d-fd0f64ebcc97">
 
 ## Introduction
 
